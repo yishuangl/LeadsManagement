@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Leads Management{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
@@ -11,7 +14,7 @@
 <body>
     <nav class="container">
         <ul>
-            <li><strong>Leads Management</strong></li>
+            <li><a href="/" class="nav-title"><strong>Leads Management</strong></a></li>
         </ul>
         <ul>
             {% block nav_items %}{% endblock %}

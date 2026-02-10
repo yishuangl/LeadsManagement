@@ -1,5 +1,52 @@
 /* Leads Management - custom styles */
 
+/* --- Pico CSS overrides --- */
+:root {
+    --pico-font-size: 87.5%;
+    --pico-font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    --pico-border-radius: 0.25rem;
+}
+
+/* Tighter table cell padding */
+table th,
+table td {
+    padding: 0.5rem 0.75rem;
+    vertical-align: middle;
+}
+
+/* Lighter table borders */
+table td {
+    --pico-table-border-color: #e0e0e0;
+}
+
+/* Smaller headings */
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+
+/* Nav title link - no underline, inherit color */
+.nav-title {
+    text-decoration: none;
+    color: inherit;
+}
+.nav-title:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Smaller, tighter buttons and form inputs */
+button,
+[type="submit"],
+[type="button"],
+[role="button"],
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* --- Status badges --- */
 .status-badge {
     display: inline-block;
     padding: 0.2em 0.6em;
@@ -18,10 +65,7 @@
     color: #155724;
 }
 
-table td, table th {
-    vertical-align: middle;
-}
-
+/* --- HTMX indicators --- */
 .htmx-indicator {
     display: none;
 }
