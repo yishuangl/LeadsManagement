@@ -66,8 +66,11 @@ Resumes are stored in `uploads/resumes/`. Accepted formats: PDF, DOC, DOCX (max 
 
 ## Creating Migrations
 
-After modifying models:
+After modifying models in `app/models/`:
 ```bash
 alembic revision --autogenerate -m "description of change"
 alembic upgrade head
 ```
+
+## Developer Notes
+See "Deveoper Notes" in tech-design.md

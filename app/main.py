@@ -14,6 +14,7 @@ from app.models.user import AdminUser
 
 from sqlalchemy import select
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 APP_DIR = Path(__file__).resolve().parent
