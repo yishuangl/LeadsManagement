@@ -48,13 +48,6 @@
 
 A default admin user is created automatically on first startup.
 
-## Usage
-
-| URL | Description |
-|-----|-------------|
-| http://localhost:8000/ | Public interest form |
-| http://localhost:8000/auth/login | Attorney login |
-| http://localhost:8000/dashboard | Leads dashboard (requires login) |
 
 ## Email
 
@@ -73,4 +66,4 @@ alembic upgrade head
 ```
 
 ## Developer Notes
-See "Deveoper Notes" in tech-design.md
+For additional notes, see "Deveoper Notes" in tech-design.md
