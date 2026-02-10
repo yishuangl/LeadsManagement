@@ -1,5 +1,17 @@
 # Leads Management - Technical Design
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Key Design Decisions](#key-design-decisions)
+  - [FastAPI vs Django](#fastapi-vs-django)
+- [Application Structure](#application-structure)
+- [Database Schema](#database-schema)
+- [Routes](#routes)
+- [Developer Notes](#developer-notes)
+- [Future Work](#future-work)
+
 ## Overview
 
 This document describes the technical design for a **FastAPI-based lead management application**. The system supports:
@@ -9,19 +21,7 @@ This document describes the technical design for a **FastAPI-based lead manageme
 - An **internal admin UI** for viewing and updating leads (auth-protected)
 - **Persistent storage** for lead and user data
 
-The application is intentionally scoped as a **demo project** with low traffic expectations and local file storage.
-
-## Goals & Non-Goals
-
-### Goals
-- Simple, maintainable server-rendered web application
-- Clear separation between public and admin functionality
-- Minimal frontend complexity (no JS framework)
-
-### Non-Goals
-- High-scale performance optimization
-- Asynchronous job queues
-- Fine-grained role-based permissions
+The application is intentionally scoped as a demo project with low traffic expectations and local file storage.
 
 
 ## Architecture
@@ -34,6 +34,30 @@ The application is intentionally scoped as a **demo project** with low traffic e
 - **Styling**: Pico CSS (classless/minimal CSS framework)
 - **Email**: SMTP via aiosmtplib (with dev mode console logging)
 - **File uploads**: Local filesystem storage
+
+
+## Key Design Decisions
+
+1. **Session auth over JWT**: The UI is server-rendered HTML, so every request already includes cookies. Session-based auth (via Starlette `SessionMiddleware` with a signed cookie) is a natural fit — no need to manage token refresh, store JWTs in localStorage, or deal with XSS exposure of tokens. The session stores only the `user_id`; the server looks up the full user on each request.
+
+2. **HTMX over SPA**: The only interactive behavior in the UI is the "Mark Reached Out" button, which swaps a single table row. HTMX handles this with HTML attributes (`hx-post`, `hx-target`, `hx-swap`) — no JavaScript framework, no build step, no client-side state management. The server returns an HTML partial (`lead_row.html`) and HTMX replaces the `<tr>` in place.
+
+3. **Background email**: Email delivery (SMTP) can take seconds and is unreliable. If done inline, the prospect would stare at a spinner while the server talks to an SMTP server. FastAPI `BackgroundTasks` runs the email sends after the HTTP response is returned, so the user sees the thank-you page immediately. If email delivery fails, the lead is still saved — email is a side effect, not a prerequisite.
+
+4. **Local filesystem for resume storage**: Resumes are stored on the local disk under `uploads/resumes/` rather than cloud storage (e.g. S3). This is a deliberate choice for a demo/low-traffic app — it avoids external service dependencies, IAM configuration, and SDK setup. Files are named `{uuid}_{original_filename}` to prevent collisions. The DB stores the relative path, and the download endpoint resolves it at serve time. The tradeoff: local storage doesn't survive container resets and doesn't scale horizontally — documented as a future migration to S3 if needed.
+
+5. **String over PG ENUM for status**: PostgreSQL `ENUM` types are created via `CREATE TYPE`, which interacts poorly with async SQLAlchemy and Alembic — the `checkfirst` introspection doesn't work through the async adapter, leading to "type already exists" errors on migration. Using `VARCHAR(20)` in the DB avoids this entirely. The Python `LeadStatus` enum still validates values at the application layer (in schemas and service code), so invalid statuses can't be written through the app.
+
+### FastAPI vs Django
+Django provides many features that align closely with this use case:
+
+- Built-in admin interface (instant internal UI)
+- Built-in authentication system
+- ORM tightly integrated with forms and templates
+- Batteries-included approach for CRUD apps
+
+For a form-heavy, admin-centric application, Django would fit naturally.
+
 
 ## Application Structure
 
@@ -106,27 +130,6 @@ leads/
 | hashed_password | VARCHAR(255) | bcrypt |
 | created_at | TIMESTAMPTZ | auto |
 
-## Key Design Decisions
-
-1. **Session auth over JWT**: The UI is server-rendered HTML, so every request already includes cookies. Session-based auth (via Starlette `SessionMiddleware` with a signed cookie) is a natural fit — no need to manage token refresh, store JWTs in localStorage, or deal with XSS exposure of tokens. The session stores only the `user_id`; the server looks up the full user on each request.
-
-2. **HTMX over SPA**: The only interactive behavior in the UI is the "Mark Reached Out" button, which swaps a single table row. HTMX handles this with HTML attributes (`hx-post`, `hx-target`, `hx-swap`) — no JavaScript framework, no build step, no client-side state management. The server returns an HTML partial (`lead_row.html`) and HTMX replaces the `<tr>` in place.
-
-3. **Background email**: Email delivery (SMTP) can take seconds and is unreliable. If done inline, the prospect would stare at a spinner while the server talks to an SMTP server. FastAPI `BackgroundTasks` runs the email sends after the HTTP response is returned, so the user sees the thank-you page immediately. If email delivery fails, the lead is still saved — email is a side effect, not a prerequisite.
-
-4. **Local filesystem for resume storage**: Resumes are stored on the local disk under `uploads/resumes/` rather than cloud storage (e.g. S3). This is a deliberate choice for a demo/low-traffic app — it avoids external service dependencies, IAM configuration, and SDK setup. Files are named `{uuid}_{original_filename}` to prevent collisions. The DB stores the relative path, and the download endpoint resolves it at serve time. The tradeoff: local storage doesn't survive container resets and doesn't scale horizontally — documented as a future migration to S3 if needed.
-
-5. **String over PG ENUM for status**: PostgreSQL `ENUM` types are created via `CREATE TYPE`, which interacts poorly with async SQLAlchemy and Alembic — the `checkfirst` introspection doesn't work through the async adapter, leading to "type already exists" errors on migration. Using `VARCHAR(20)` in the DB avoids this entirely. The Python `LeadStatus` enum still validates values at the application layer (in schemas and service code), so invalid statuses can't be written through the app.
-
-### FastAPI vs Django
-Django provides many features that align closely with this use case:
-
-- Built-in admin interface (instant internal UI)
-- Built-in authentication system
-- ORM tightly integrated with forms and templates
-- Batteries-included approach for CRUD apps
-
-For a form-heavy, admin-centric application, Django would fit naturally.
 
 ## Routes
 
@@ -155,7 +158,9 @@ For a form-heavy, admin-centric application, Django would fit naturally.
 
 ## Future Work
 
-1. Create "lead"<->"user" mapping, so each admin user views only their leads. Communications will be sent to that admin user's email instead of the default ATTORNEY_EMAIL
+1. Create "lead"<->"user" mapping, so each admin user (attorney) views only their leads. 
+    - Public form will be associated with each attorney
+    - Communications will be sent to attorney's email instead of the default ATTORNEY_EMAIL
 2. Use Cloud storage like S3 instead of local resume storage
 3. Email status tracking and template editing
 4. Leads dashboard: pagination and advanced filtering
