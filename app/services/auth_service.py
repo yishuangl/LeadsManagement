@@ -1,5 +1,6 @@
 import bcrypt
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
@@ -11,6 +12,19 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
+
+
+async def create_user(
+    session: AsyncSession, username: str, password: str
+) -> AdminUser | None:
+    user = AdminUser(username=username, hashed_password=hash_password(password))
+    session.add(user)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        return None
+    return user
 
 
 async def authenticate_user(

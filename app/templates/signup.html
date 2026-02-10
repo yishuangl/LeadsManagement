@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Leads Management{% endblock %}
+{% block title %}Sign Up - Leads Management{% endblock %}
 
 {% block content %}
 <article style="max-width: 400px; margin: 0 auto;">
-    <h2>Login</h2>
+    <h2>Sign Up</h2>
     {% if error %}
     <p role="alert" style="color: var(--pico-del-color);">{{ error }}</p>
     {% endif %}
-    <form method="post" action="/auth/login">
+    <form method="post" action="/auth/signup">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required autofocus>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
-        <button type="submit">Login</button>
+        <button type="submit">Sign Up</button>
     </form>
-    <p style="text-align: center;"><small>Don't have an account? <a href="/auth/signup">Sign up</a></small></p>
+    <p style="text-align: center;"><small>Already have an account? <a href="/auth/login">Log in</a></small></p>
 </article>
 {% endblock %}
