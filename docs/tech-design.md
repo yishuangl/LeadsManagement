@@ -108,12 +108,15 @@ leads/
 
 ## Key Design Decisions
 
-1. **Session auth over JWT**: Simpler for server-rendered HTML; no token refresh complexity.
-2. **HTMX over SPA**: Minimal JavaScript; server renders HTML partials for interactive updates.
-3. **Background email**: Emails dispatched via FastAPI `BackgroundTasks` to avoid blocking form responses.
-4. **File validation**: Extension + content-type checks with 10 MB size limit. UUIDs in filenames prevent collisions.
-5. **Path traversal protection**: Resume download endpoint validates paths stay within the upload directory.
-6. **String over PG ENUM for status**: Avoids PostgreSQL `CREATE TYPE` migration headaches with async drivers. The Python `LeadStatus` enum validates values at the application layer.
+1. **Session auth over JWT**: The UI is server-rendered HTML, so every request already includes cookies. Session-based auth (via Starlette `SessionMiddleware` with a signed cookie) is a natural fit — no need to manage token refresh, store JWTs in localStorage, or deal with XSS exposure of tokens. The session stores only the `user_id`; the server looks up the full user on each request.
+
+2. **HTMX over SPA**: The only interactive behavior in the UI is the "Mark Reached Out" button, which swaps a single table row. HTMX handles this with HTML attributes (`hx-post`, `hx-target`, `hx-swap`) — no JavaScript framework, no build step, no client-side state management. The server returns an HTML partial (`lead_row.html`) and HTMX replaces the `<tr>` in place.
+
+3. **Background email**: Email delivery (SMTP) can take seconds and is unreliable. If done inline, the prospect would stare at a spinner while the server talks to an SMTP server. FastAPI `BackgroundTasks` runs the email sends after the HTTP response is returned, so the user sees the thank-you page immediately. If email delivery fails, the lead is still saved — email is a side effect, not a prerequisite.
+
+4. **Local filesystem for resume storage**: Resumes are stored on the local disk under `uploads/resumes/` rather than cloud storage (e.g. S3). This is a deliberate choice for a demo/low-traffic app — it avoids external service dependencies, IAM configuration, and SDK setup. Files are named `{uuid}_{original_filename}` to prevent collisions. The DB stores the relative path, and the download endpoint resolves it at serve time. The tradeoff: local storage doesn't survive container resets and doesn't scale horizontally — documented as a future migration to S3 if needed.
+
+5. **String over PG ENUM for status**: PostgreSQL `ENUM` types are created via `CREATE TYPE`, which interacts poorly with async SQLAlchemy and Alembic — the `checkfirst` introspection doesn't work through the async adapter, leading to "type already exists" errors on migration. Using `VARCHAR(20)` in the DB avoids this entirely. The Python `LeadStatus` enum still validates values at the application layer (in schemas and service code), so invalid statuses can't be written through the app.
 
 ### FastAPI vs Django
 Django provides many features that align closely with this use case:
@@ -148,12 +151,11 @@ For a form-heavy, admin-centric application, Django would fit naturally.
 
 1. For configurations, `pydantic_settings` resolves each field in the order env vars -> .env file (defined in `model_config`) -> class defaults
 2. Don't manually edit files in `alembic`. See "Creating Migrations" in how-to-run.md
-3. After a lead is submitted, emails are dispatched via FastAPI background tasks. 
+3. After a lead is submitted, emails are dispatched via FastAPI background tasks. Update the email content in `app/services/email_service.py` 
 
 ## Future Work
 
-1. Create lead<->admin user mapping, so the admin user only views their leads. The email will be sent to that admin user (attorney) instead of the default ATTORNEY_EMAIL
-2. Use Cloud storage like S3 instead of local storage for saving resumes
-3. Password reset flow
-4. Email status tracking
-5. Leads dashboard: pagination and advanced filtering
+1. Create "lead"<->"user" mapping, so each admin user views only their leads. Communications will be sent to that admin user's email instead of the default ATTORNEY_EMAIL
+2. Use Cloud storage like S3 instead of local resume storage
+3. Email status tracking and template editing
+4. Leads dashboard: pagination and advanced filtering
