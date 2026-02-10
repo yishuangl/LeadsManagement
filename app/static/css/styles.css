@@ -1,0 +1,35 @@
+/* Leads Management - custom styles */
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.reached-out {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+table td, table th {
+    vertical-align: middle;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline;
+}

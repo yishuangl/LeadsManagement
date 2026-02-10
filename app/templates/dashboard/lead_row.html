@@ -1,0 +1,35 @@
+<tr id="lead-{{ lead.id }}">
+    <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+    <td>{{ lead.email }}</td>
+    <td>
+        {% if lead.resume_path %}
+        <a href="/dashboard/leads/{{ lead.id }}/resume">Download</a>
+        {% else %}
+        —
+        {% endif %}
+    </td>
+    <td>
+        {% if lead.status == "PENDING" %}
+        <span class="status-badge pending">Pending</span>
+        {% else %}
+        <span class="status-badge reached-out">Reached Out</span>
+        {% endif %}
+    </td>
+    <td>{{ lead.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>
+        {% if lead.status == "PENDING" %}
+        <button
+            hx-post="/dashboard/leads/{{ lead.id }}/reach-out"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            class="outline"
+            style="padding: 0.3em 0.8em; margin: 0;"
+        >
+            Mark Reached Out
+            <span class="htmx-indicator" aria-busy="true"></span>
+        </button>
+        {% else %}
+        —
+        {% endif %}
+    </td>
+</tr>
