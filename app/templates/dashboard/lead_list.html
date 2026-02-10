@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Leads Management{% endblock %}
+
+{% block nav_items %}
+<li><a href="/dashboard">Dashboard</a></li>
+<li>
+    <form method="post" action="/auth/logout" style="margin: 0;">
+        <button type="submit" class="outline secondary" style="margin: 0; padding: 0.3em 0.8em;">Logout</button>
+    </form>
+</li>
+{% endblock %}
+
+{% block content %}
+<h2>Leads</h2>
+{% if leads %}
+<figure>
+<table role="grid">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Resume</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lead in leads %}
+        {% include "dashboard/lead_row.html" %}
+        {% endfor %}
+    </tbody>
+</table>
+</figure>
+{% else %}
+<p>No leads yet.</p>
+{% endif %}
+{% endblock %}

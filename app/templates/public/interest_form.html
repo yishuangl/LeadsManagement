@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Your Interest - Legal Services{% endblock %}
+
+{% block nav_items %}
+<li><a href="/auth/login">Attorney Login</a></li>
+{% endblock %}
+
+{% block content %}
+<article style="max-width: 600px; margin: 0 auto;">
+    <h2>Interested in Legal Services?</h2>
+    <p>Fill out the form below and an attorney will reach out to you.</p>
+    {% if error %}
+    <p role="alert" style="color: var(--pico-del-color);">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="/submit" enctype="multipart/form-data">
+        <div class="grid">
+            <label>
+                First Name
+                <input type="text" name="first_name" required value="{{ first_name or '' }}">
+            </label>
+            <label>
+                Last Name
+                <input type="text" name="last_name" required value="{{ last_name or '' }}">
+            </label>
+        </div>
+        <label>
+            Email
+            <input type="email" name="email" required value="{{ email or '' }}">
+        </label>
+        <label>
+            Resume (optional, PDF/DOC/DOCX, max 10 MB)
+            <input type="file" name="resume" accept=".pdf,.doc,.docx">
+        </label>
+        <button type="submit">Submit</button>
+    </form>
+</article>
+{% endblock %}
